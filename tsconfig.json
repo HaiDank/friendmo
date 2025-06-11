@@ -8,11 +8,12 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": true,
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
   },
   "include": [
     "./*.js",
     "src/**/*.ts",
-    "test/**/*.ts",
+    "test/**/*.ts", "src/types/index.d.ts",
   ],
+  "files":["./src/types/index.d.ts"]
 }

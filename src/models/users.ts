@@ -1,0 +1,122 @@
+import mongoose, { InferSchemaType, Model } from 'mongoose';
+import validator from 'validator';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+
+export interface IUser {
+	email: string;
+	name: string;
+	password: string;
+	balance: number;
+	friends: mongoose.Types.ObjectId[];
+	tokens: { token: string }[];
+	generateToken(): Promise<string>;
+	toJSON(): any
+}
+
+interface UserModelType extends Model<IUser> {
+	findUserByCredential(email:string, password: string): Promise<IUser>
+}
+
+// interface UserMethods{
+// 	generateToken(): Promise<string>;
+// }
+
+const userSchema = new mongoose.Schema<IUser, UserModelType>({
+	name: { type: String, required: true },
+	email: {
+		type: String,
+		unique: true,
+		required: true,
+		validator(value: string) {
+			if (!validator.isEmail(value)) {
+				throw new Error('Please enter a valid email address');
+			}
+		},
+	},
+	password: {
+		type: String,
+		required: true,
+		validator(value: any) {
+			if (value.length <= 6) {
+				throw new Error('Password is too short');
+			}
+		},
+	},
+	balance: {
+		type: Number,
+		required: true,
+		default: 0,
+		validator(value: number) {
+			if (value < 0) {
+				throw new Error('Invalid balance');
+			}
+		},
+	},
+	friends: [{ type: mongoose.Types.ObjectId, ref: 'User', default: null }],
+	tokens: [
+		{
+			token: {
+				type: String,
+				required: true,
+			},
+		},
+	],
+});
+
+userSchema.pre('save', async function (next) {
+	const user = this;
+	if (user.isModified('password')) {
+		user.password = await bcrypt.hash(user.password, 8);
+	}
+
+	next();
+});
+
+userSchema.methods.generateToken = async function () {
+	const user = this;
+	const token = jwt.sign(
+		{
+			_id: user._id.toString(),
+		},
+		process.env.JWT_SECRET!
+	);
+
+	user.tokens.push({ token });
+	await user.save();
+
+	return token;
+};
+
+userSchema.statics.findUserByCredential = async function (
+	email: string,
+	password: string
+) {
+	const user = await User.findOne({ email });
+
+	if (!user) {
+		throw new Error('Unable to login');
+	}
+
+	const match = await bcrypt.compare(password, user.password);
+
+	if (!match) {
+		throw new Error('Unable to login');
+	}
+
+	return user
+};
+
+userSchema.methods.toJSON = function () {
+	const user = this;
+	const userObject = user.toObject();
+
+	delete userObject.password;
+	delete userObject.tokens;
+
+	return userObject;
+};
+
+export type UserType = InferSchemaType<typeof userSchema>
+
+export const User = mongoose.model<IUser, UserModelType>('User', userSchema);

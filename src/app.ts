@@ -2,6 +2,7 @@ import express from 'express';
 import morgan from 'morgan';
 import helmet from 'helmet';
 import cors from 'cors';
+import './db/mongoose';
 
 import * as middlewares from './middlewares';
 import api from './api';
@@ -17,6 +18,7 @@ app.use(morgan('dev'));
 // app.use(helmet());
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 const hbs = create({ partialsDir: ['./views/partials/'], extname: 'hbs' });
 
