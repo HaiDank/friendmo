@@ -5,12 +5,14 @@
   "main": "src/index.ts",
   "scripts": {
     "start": "ts-node src/index.ts",
-    "dev": "nodemon src/index.ts",
-    "build": "tsc",
     "start:dist": "node dist/src/index.js",
     "lint": "eslint --fix src test",
     "test": "jest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "dev": "concurrently \"nodemon src/index.ts\" \"pnpm run watch:css\"",
+    "build": "concurrently \"pnpm run build:css\" \"tsc\"",
+    "build:css": "postcss ./styles.css -o public/css/styles.css",
+    "watch:css": "postcss ./styles.css -o public/css/styles.css --watch"
   },
   "license": "MIT",
   "dependencies": {
@@ -22,6 +24,7 @@
     "morgan": "^1.10.0"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.8",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/jest": "^29.5.14",
@@ -30,13 +33,18 @@
     "@types/supertest": "^6.0.3",
     "@typescript-eslint/eslint-plugin": "^8.34.0",
     "@typescript-eslint/parser": "^8.34.0",
+    "autoprefixer": "^10.4.21",
+    "concurrently": "^9.1.2",
     "eslint": "^9.28.0",
     "eslint-config-airbnb-typescript": "^18.0.0",
     "eslint-import-resolver-typescript": "^4.4.3",
     "eslint-plugin-import": "^2.31.0",
     "jest": "^30.0.0",
     "nodemon": "^3.1.10",
+    "postcss": "^8.5.4",
+    "postcss-cli": "^11.0.1",
     "supertest": "^7.1.1",
+    "tailwindcss": "^4.1.8",
     "ts-jest": "^29.3.4",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"

@@ -2,7 +2,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "sourceMap": true,
-    "target": "esnext",
+    "target": "es2024",
     "module": "nodenext",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,

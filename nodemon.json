@@ -1,0 +1,5 @@
+{
+  "watch": ["src", ".env", "public"],
+  "ext": ".ts,.js",
+  "ignore": []
+}
