@@ -2,25 +2,14 @@ import mongoose, { InferSchemaType, Model } from 'mongoose';
 import validator from 'validator';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { IUser } from '../interfaces/User';
 
-export interface IUser {
-	email: string;
-	name: string;
-	password: string;
-	balance: number;
-	friends: mongoose.Types.ObjectId[];
-	tokens: { token: string }[];
-	generateToken(): Promise<string>;
-	toJSON(): any
-}
+
 
 interface UserModelType extends Model<IUser> {
 	findUserByCredential(email:string, password: string): Promise<IUser>
 }
 
-// interface UserMethods{
-// 	generateToken(): Promise<string>;
-// }
 
 const userSchema = new mongoose.Schema<IUser, UserModelType>({
 	name: { type: String, required: true },
@@ -116,7 +105,5 @@ userSchema.methods.toJSON = function () {
 
 	return userObject;
 };
-
-export type UserType = InferSchemaType<typeof userSchema>
 
 export const User = mongoose.model<IUser, UserModelType>('User', userSchema);

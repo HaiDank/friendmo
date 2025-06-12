@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { User } from '../models/users';
 import bcrypt from 'bcrypt';
+import { IUser } from '../interfaces/User';
 
 export const getUserProfile = async (
 	req: Request,
@@ -36,7 +37,7 @@ export const login = async (
 			throw new Error('Password is required');
 		}
 
-		const user = await User.findUserByCredential(email, password)
+		const user = await User.findUserByCredential(email, password);
 
 		const token = await user.generateToken();
 
@@ -70,5 +71,40 @@ export const signup = async (
 		res.status(201).send({ user: user.toJSON(), token });
 	} catch (error) {
 		next(error);
+	}
+};
+
+type AllowedFields = 'email' | 'name' | 'password';
+
+const isAllowedField = (fields: string[]): fields is AllowedFields[] => {
+	const allowedFields: AllowedFields[] = ['email', 'name', 'password'];
+
+	return fields.every((element) => 
+		allowedFields.includes(element as AllowedFields)
+	);
+};
+
+export const updateProfile = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
+	try {
+		const fields = Object.keys(req.body);
+
+		if (!isAllowedField(fields)) {
+			throw new Error('Invalid fields');
+		}
+
+		const user = req.user!;
+
+		fields.forEach((field) => {
+			user[field] = req.body[field];
+		});
+		await user.save();
+
+		res.status(200).send(user);
+	} catch (e) {
+		next(e);
 	}
 };
