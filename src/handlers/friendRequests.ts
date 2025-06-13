@@ -3,7 +3,7 @@ import { FriendRequest } from '../models/friendRequests';
 import { User } from '../models/users';
 import mongoose from 'mongoose';
 
-export const getFriendRequests = async (
+export const getIncomingFriendRequests = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -17,7 +17,7 @@ export const getFriendRequests = async (
 		const userId = req.user!._id;
 
 		const friendRequests = await FriendRequest.find({
-			from: userId,
+			to: userId,
 			status: 'pending',
 		});
 
