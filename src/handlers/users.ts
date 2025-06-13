@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { User } from '../models/users';
 import bcrypt from 'bcrypt';
 import { IUser } from '../interfaces/User';
+import { FilterQuery } from 'mongoose';
 
 export const getUserProfile = async (
 	req: Request,
@@ -35,10 +36,42 @@ export const getUserFriends = async (
 
 		await user.populate({
 			path: 'friends',
-			select: '_id name'
-		})
+			select: '_id name',
+		});
 
 		res.send(user.friends);
+	} catch (error) {
+		next(error);
+	}
+};
+
+export const findUsers = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
+	try {
+		const user = req.user;
+		if (!user) {
+			res.status(404);
+			return;
+		}
+
+		const { name, email } = req.query;
+
+		const filter: FilterQuery<IUser> = {};
+
+
+		if(name){
+			filter.name = { $regex: '.*' + name + '.*' , $options: "i" }
+		}
+		if(email){
+			filter.email = { $regex: '.*' + email + '.*' , $options: "i" }
+		}
+
+		const usersList = await User.find(filter);
+
+		res.send(usersList)
 	} catch (error) {
 		next(error);
 	}
@@ -47,14 +80,14 @@ export const getUserFriends = async (
 export const logout = async (
 	req: Request,
 	res: Response,
-	next: NextFunction,
+	next: NextFunction
 ) => {
 	try {
 		if (!req.user) {
 			throw new Error('Not logged in');
 		}
 
-		const isMultiple = req.query.all
+		const isMultiple = req.query.all;
 
 		if (isMultiple === 'true') {
 			req.user.tokens = [];
@@ -157,4 +190,3 @@ export const updateProfile = async (
 		next(e);
 	}
 };
-

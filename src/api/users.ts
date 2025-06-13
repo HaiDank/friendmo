@@ -1,6 +1,7 @@
 import express from 'express';
 import { authMiddleware } from '../middlewares';
 import {
+	findUsers,
 	getUserFriends,
 	getUserProfile,
 	login,
@@ -16,6 +17,9 @@ router.get('/me', authMiddleware, getUserProfile);
 
 // GET get user's friends list
 router.get('/me/friends', authMiddleware, getUserFriends);
+
+// GET get users
+router.get('/', authMiddleware, findUsers);
 
 // POST log in to existing user
 router.post('/login', login);

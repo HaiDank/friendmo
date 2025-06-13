@@ -34,11 +34,7 @@ const userSchema = new mongoose.Schema<IUser, UserModelType>(
 			type: Number,
 			required: true,
 			default: 0,
-			validator(value: number) {
-				if (value < 0) {
-					throw new Error('Invalid balance');
-				}
-			},
+			min: 0
 		},
 		friends: [
 			{ type: mongoose.Schema.ObjectId, ref: 'User', default: null },

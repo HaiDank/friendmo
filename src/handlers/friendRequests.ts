@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { FriendRequest } from '../models/friendRequests';
 import { User } from '../models/users';
+import mongoose from 'mongoose';
 
 export const getFriendRequests = async (
 	req: Request,
@@ -17,7 +18,7 @@ export const getFriendRequests = async (
 
 		const friendRequests = await FriendRequest.find({
 			from: userId,
-            status: 'pending'
+			status: 'pending',
 		});
 
 		res.send(friendRequests);
@@ -44,21 +45,21 @@ export const sendFriendRequest = async (
 			throw new Error('Please select a user to befriend');
 		}
 
-		const friend = await User.findById(friendId);
+		const sender = await User.findById(friendId);
 
 		// check if user exist
 
-		if (!friend) {
+		if (!sender) {
 			throw new Error('Invalid user');
 		}
 
 		// check if user is befriending itself
-		if (userId.equals(friend._id)) {
+		if (userId.equals(sender._id)) {
 			throw new Error('You cannot befriend yourself');
 		}
 		const request = await FriendRequest.findOne({
 			from: userId,
-			to: friend._id,
+			to: sender._id,
 		});
 
 		// check request
@@ -66,16 +67,16 @@ export const sendFriendRequest = async (
 			throw new Error('You already sent a request');
 		}
 
-		const isAlreadyFriend = req.user.friends.includes(friend._id);
+		const isAlreadyFriend = req.user.friends.includes(sender._id);
 
-		// check friend status
+		// check sender status
 		if (isAlreadyFriend) {
-			throw new Error('You are already friend with this user');
+			throw new Error('You are already sender with this user');
 		}
 
 		const friendRequest = new FriendRequest({
 			from: userId,
-			to: friend._id,
+			to: sender._id,
 		});
 
 		await friendRequest.save();
@@ -91,19 +92,24 @@ export const acceptFriendRequest = async (
 	res: Response,
 	next: NextFunction
 ) => {
+	const session = await mongoose.startSession();
+	session.startTransaction();
+
 	try {
 		if (!req.user) {
-			return;
+			throw new Error('Not logged in');
 		}
 
 		const { id } = req.params;
-		const friendRequest = await FriendRequest.findById(id);
 
+		const friendRequest = await FriendRequest.findById(id).session(session);
+
+		req.user.$session(session);
 		if (!friendRequest) {
 			throw new Error('Request does not exist');
 		}
 
-        if (!friendRequest.to.equals(req.user._id)) {
+		if (!friendRequest.to.equals(req.user._id)) {
 			throw new Error('Invalid request');
 		}
 
@@ -111,25 +117,34 @@ export const acceptFriendRequest = async (
 			throw new Error('You cannot do further action to this request');
 		}
 
-		friendRequest.status = 'accepted';
+		const sender = await User.findById(friendRequest.from).session(session);
 
-		const friend = await User.findById(friendRequest.to);
-
-		if (!friend) {
+		if (!sender) {
 			throw new Error(
-				'The user you want to befriend does not exist anymore'
+				'The user that want to befriend you does not exist anymore'
 			);
 		}
 
-		req.user.friends.push(friend._id);
-		friend.friends.push(req.user._id);
+		friendRequest.status = 'accepted';
+		req.user.friends.push(sender._id);
+		sender.friends.push(req.user._id);
+
 		await friendRequest.save();
-		await friend.save();
+		await sender.save();
 		await req.user.save();
+
+		await session.commitTransaction();
 
 		res.send('Friend request accepted');
 	} catch (error) {
+		if (session) {
+			await session.abortTransaction();
+		}
 		next(error);
+	} finally {
+		if (session) {
+			session.endSession();
+		}
 	}
 };
 

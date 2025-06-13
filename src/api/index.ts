@@ -3,6 +3,7 @@ import express from 'express';
 import MessageResponse from '../interfaces/MessageResponse';
 import users from './users';
 import friendRequests from './friendRequests';
+import transactions from './transactions';
 
 const router = express.Router();
 
@@ -13,6 +14,7 @@ router.get<{}, MessageResponse>('/', (req, res) => {
 });
 
 router.use('/users', users);
-router.use('/friend', friendRequests);
+router.use('/friends', friendRequests);
+router.use('/transactions', transactions);
 
 export default router;
