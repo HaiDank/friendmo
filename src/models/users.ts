@@ -8,50 +8,52 @@ interface UserModelType extends Model<IUser> {
 	findUserByCredential(email: string, password: string): Promise<IUser>;
 }
 
-const userSchema = new mongoose.Schema<IUser, UserModelType>({
-	name: { type: String, required: true },
-	email: {
-		type: String,
-		unique: true,
-		required: true,
-		validator(value: string) {
-			if (!validator.isEmail(value)) {
-				throw new Error('Please enter a valid email address');
-			}
-		},
-	},
-	password: {
-		type: String,
-		required: true,
-		validator(value: any) {
-			if (value.length <= 6) {
-				throw new Error('Password is too short');
-			}
-		},
-	},
-	balance: {
-		type: Number,
-		required: true,
-		default: 0,
-		validator(value: number) {
-			if (value < 0) {
-				throw new Error('Invalid balance');
-			}
-		},
-	},
-	friends: [{ type: mongoose.Types.ObjectId, ref: 'User', default: null }],
-	friendRequests: [
-		{ type: mongoose.Types.ObjectId, ref: 'User', default: null },
-	],
-	tokens: [
-		{
-			token: {
-				type: String,
-				required: true,
+const userSchema = new mongoose.Schema<IUser, UserModelType>(
+	{
+		name: { type: String, required: true },
+		email: {
+			type: String,
+			unique: true,
+			required: true,
+			validator(value: string) {
+				if (!validator.isEmail(value)) {
+					throw new Error('Please enter a valid email address');
+				}
 			},
 		},
-	],
-});
+		password: {
+			type: String,
+			required: true,
+			validator(value: any) {
+				if (value.length <= 6) {
+					throw new Error('Password is too short');
+				}
+			},
+		},
+		balance: {
+			type: Number,
+			required: true,
+			default: 0,
+			validator(value: number) {
+				if (value < 0) {
+					throw new Error('Invalid balance');
+				}
+			},
+		},
+		friends: [
+			{ type: mongoose.Schema.ObjectId, ref: 'User', default: null },
+		],
+		tokens: [
+			{
+				token: {
+					type: String,
+					required: true,
+				},
+			},
+		],
+	},
+	{ timestamps: true }
+);
 
 userSchema.pre('save', async function (next) {
 	const user = this;

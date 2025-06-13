@@ -8,6 +8,8 @@ export interface IUser {
 	friends: mongoose.Types.ObjectId[];
 	tokens: { token: string }[];
 	friendRequests: mongoose.Types.ObjectId[];
+	createdAt: Date;
+	updatedAt: Date;
 	generateToken(): Promise<string>;
 	toJSON(): any;
 }

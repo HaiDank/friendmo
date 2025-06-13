@@ -21,6 +21,29 @@ export const getUserProfile = async (
 	}
 };
 
+export const getUserFriends = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
+	try {
+		const user = req.user;
+		if (!user) {
+			res.status(401);
+			return;
+		}
+
+		await user.populate({
+			path: 'friends',
+			select: '_id name'
+		})
+
+		res.send(user.friends);
+	} catch (error) {
+		next(error);
+	}
+};
+
 export const logout = async (
 	req: Request,
 	res: Response,
@@ -135,28 +158,3 @@ export const updateProfile = async (
 	}
 };
 
-export const sendFriendRequest = async (
-	req: Request,
-	res: Response,
-	next: NextFunction
-) => {
-	const userId = req.user!._id;
-	const { id: friendId } = req.body;
-
-	try {
-		if (!friendId) {
-			throw new Error('Please select a user to befriend');
-		}
-		if (userId === friendId) {
-			throw new Error('You cannot befriend yourself');
-		}
-		const doesRequestExist = await User.findOne({
-			_id: friendId,
-			friendRequests: userId,
-		});
-
-		console.log(doesRequestExist);
-	} catch (error) {
-		next(error);
-	}
-};
