@@ -4,12 +4,9 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { IUser } from '../interfaces/User';
 
-
-
 interface UserModelType extends Model<IUser> {
-	findUserByCredential(email:string, password: string): Promise<IUser>
+	findUserByCredential(email: string, password: string): Promise<IUser>;
 }
-
 
 const userSchema = new mongoose.Schema<IUser, UserModelType>({
 	name: { type: String, required: true },
@@ -43,6 +40,9 @@ const userSchema = new mongoose.Schema<IUser, UserModelType>({
 		},
 	},
 	friends: [{ type: mongoose.Types.ObjectId, ref: 'User', default: null }],
+	friendRequests: [
+		{ type: mongoose.Types.ObjectId, ref: 'User', default: null },
+	],
 	tokens: [
 		{
 			token: {
@@ -93,7 +93,7 @@ userSchema.statics.findUserByCredential = async function (
 		throw new Error('Unable to login');
 	}
 
-	return user
+	return user;
 };
 
 userSchema.methods.toJSON = function () {

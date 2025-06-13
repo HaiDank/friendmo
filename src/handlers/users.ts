@@ -21,6 +21,32 @@ export const getUserProfile = async (
 	}
 };
 
+export const logout = async (
+	req: Request,
+	res: Response,
+	next: NextFunction,
+) => {
+	try {
+		if (!req.user) {
+			throw new Error('Not logged in');
+		}
+
+		const isMultiple = req.query.all
+
+		if (isMultiple === 'true') {
+			req.user.tokens = [];
+		} else {
+			req.user!.tokens = req.user!.tokens.filter(
+				(token) => token.token !== req.token
+			);
+		}
+		await req.user.save();
+		res.send('Logout successfully');
+	} catch (error) {
+		next(error);
+	}
+};
+
 export const login = async (
 	req: Request,
 	res: Response,
@@ -79,7 +105,7 @@ type AllowedFields = 'email' | 'name' | 'password';
 const isAllowedField = (fields: string[]): fields is AllowedFields[] => {
 	const allowedFields: AllowedFields[] = ['email', 'name', 'password'];
 
-	return fields.every((element) => 
+	return fields.every((element) =>
 		allowedFields.includes(element as AllowedFields)
 	);
 };
@@ -106,5 +132,31 @@ export const updateProfile = async (
 		res.status(200).send(user);
 	} catch (e) {
 		next(e);
+	}
+};
+
+export const sendFriendRequest = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
+	const userId = req.user!._id;
+	const { id: friendId } = req.body;
+
+	try {
+		if (!friendId) {
+			throw new Error('Please select a user to befriend');
+		}
+		if (userId === friendId) {
+			throw new Error('You cannot befriend yourself');
+		}
+		const doesRequestExist = await User.findOne({
+			_id: friendId,
+			friendRequests: userId,
+		});
+
+		console.log(doesRequestExist);
+	} catch (error) {
+		next(error);
 	}
 };

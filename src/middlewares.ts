@@ -55,7 +55,7 @@ export async function authMiddleware(
 		}
 
 		req.user = user;
-
+		req.token = token;
 		next();
 	} catch (error) {
 		res.status(401).send(error);
